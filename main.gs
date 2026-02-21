@@ -24,6 +24,7 @@ const CONFIG = {
   COLOR_CONFLICT: '8',
 
   COLOR_DEFAULT: '7',
+  COLOR_PENDING: '7', // неоплачено (<48h) — оставляем/ставим "оригинальный голубой"
   COLOR_DEBTOR: '11',
   ROOM_COLORS: { Apollo: '3', Hubane: '6', Juku: '4', Limpa: '5', Crocs: '9' },
 
@@ -538,13 +539,21 @@ function updateCalendarStatuses_() {
     const isDebtor = (!manualOk) && (autoPaid <= 0.001) && (hoursPast >= CONFIG.DEBT_HOURS);
 
     if (isDebtor) {
-      debtCount++;
-      safeSetColor_(event, CONFIG.COLOR_DEBTOR);
-      ensureDebtHint_(event);
-    } else {
-      clearDebtHint_(event);
-      safeSetColor_(event, getRoomColor_(title));
-    }
+  debtCount++;
+  safeSetColor_(event, CONFIG.COLOR_DEBTOR);
+  ensureDebtHint_(event);
+  return;
+}
+
+clearDebtHint_(event);
+
+const isPaid = manualOk || (autoPaid > 0.001);
+if (isPaid) {
+  safeSetColor_(event, getRoomColor_(title));
+} else {
+  safeSetColor_(event, CONFIG.COLOR_PENDING);
+  // НЕ оплачено и ещё не должник → цвет НЕ трогаем (оставляем как есть)
+}
   });
 
   log_(`Calendar: done. bookings=${bookings.length} conflicts=${conflicts.length} debtors=${debtCount}`);
